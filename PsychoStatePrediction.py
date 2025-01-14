@@ -164,10 +164,10 @@ nn.fit(X_train_final,t_train_final)
 
 t_hat_test = nn.predict(X_test)
 
-print("DIO CANE\n\n")
+print("AAAAE\n\n")
 print("CLASSIFICATION REPORT FOR NN ",classification_report(t_test,t_hat_test))
 
-print("SERPENTE IL SIGNORE")
+print("AAA")
 
 #CONFUSION MATRIX
 from sklearn.metrics import confusion_matrix
