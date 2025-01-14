@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import tensorflow as tf
 
+from CognitiveLoadPrediction import t_hat_test
+
 df = pd.read_csv("psychological_state_dataset.csv")
 
 #EDA
@@ -76,7 +78,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 
 #commented out to avoid running the code again
-"""
+""""
 # Log regression
 logreg = LogisticRegression()
 param_grid_lr = {
@@ -159,15 +161,13 @@ t_train_final = np.hstack((t_train, t_dev))
 #FINAL MODELS
 nn = MLPClassifier(activation='relu', alpha=0.0001,hidden_layer_sizes=(100,100),solver='adam')
 nn.fit(X_train_final,t_train_final)
+
 t_hat_test = nn.predict(X_test)
 
-#SCORES
-t_test = tf.cast(t_test, dtype=tf.int64)
-t_hat_test = tf.cast(t_hat_test, dtype=tf.float32)
-loss_nn = tf.keras.losses.categorical_crossentropy(t_test,t_hat_test)
-
+print("DIO CANE\n\n")
 print("CLASSIFICATION REPORT FOR NN ",classification_report(t_test,t_hat_test))
-print("VALUE OF CROSS ENTROPY LOSS FOR NN: ",loss_nn.numpy())
+
+print("SERPENTE IL SIGNORE")
 
 #CONFUSION MATRIX
 from sklearn.metrics import confusion_matrix
