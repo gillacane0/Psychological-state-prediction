@@ -4,8 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import tensorflow as tf
-
-from CognitiveLoadPrediction import t_hat_test
+from sklearn.metrics import hinge_loss
 
 df = pd.read_csv("psychological_state_dataset.csv")
 
@@ -77,8 +76,8 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 
-#commented out to avoid running the code again
-""""
+
+"""
 # Log regression
 logreg = LogisticRegression()
 param_grid_lr = {
@@ -143,35 +142,51 @@ print("Classification report for NN on Dev set: ",
 
 
 t_dev = tf.cast(t_dev, dtype=tf.int64)
-t_hat_dev_nn = tf.cast(t_hat_dev_nn, dtype=tf.float32)
-t_hat_dev_svm = tf.cast(t_hat_dev_svm, dtype=tf.float32)
+t_hat_dev_proba_nn = clf_nn.predict_proba(X_dev)
+t_hat_dev_proba_nn = tf.cast(t_hat_dev_proba_nn, dtype=tf.float32)
 
-lossNN = tf.keras.losses.categorical_crossentropy(t_dev,t_hat_dev_svm)
-lossSVC = tf.keras.losses.categorical_crossentropy(t_dev,t_hat_dev_nn)
+loss_nn = tf.keras.losses.sparse_categorical_crossentropy(t_dev,t_hat_dev_proba_nn)
+decision_values_SVM = clf_svm.decision_function(X_dev)
+loss_SVM = hinge_loss(t_dev, decision_values_SVM)
 
-print("VALUE OF CROSS ENTROPY LOSS FOR DEV SET FOR SVM: ",lossSVC.numpy())
-print("VALUE OF CROSS ENTROPY LOSS FOR DEV SET FOR NN: ",lossNN.numpy())
-
+print("VALUE OF CROSS ENTROPY LOSS FOR DEV SET FOR SVM: ",tf.reduce_mean(loss_SVM).numpy())
+print("VALUE OF CROSS ENTROPY LOSS FOR DEV SET FOR NN: ",tf.reduce_mean(loss_nn).numpy())
 """
+
 
 # Merge Train and development
 X_train_final = np.vstack((X_train, X_dev))
 t_train_final = np.hstack((t_train, t_dev))
 
-#FINAL MODELS
-nn = MLPClassifier(activation='relu', alpha=0.0001,hidden_layer_sizes=(100,100),solver='adam')
-nn.fit(X_train_final,t_train_final)
+#FINAL MODEL
+svm = SVC(C=1000, gamma=0.001, kernel='rbf')
+svm.fit(X_train_final,t_train_final)
 
-t_hat_test = nn.predict(X_test)
+#SCORES
+t_hat_test_svm = svm.predict(X_test)
+decision_values_SVM = svm.decision_function(X_dev)
+loss_SVM = hinge_loss(t_dev, decision_values_SVM)
 
-print("AAAAE\n\n")
-print("CLASSIFICATION REPORT FOR NN ",classification_report(t_test,t_hat_test))
+print("CLASSIFICATION REPORT FOR SVM ",classification_report(t_test,t_hat_test_svm))
+print("VALUE OF HINGE LOSS  FOR SVM: ",tf.reduce_mean(loss_SVM).numpy())
 
-print("AAA")
+
+#FOR NEURAL NEWORK
+
+#nn = MLPClassifier(activation='relu', alpha=0.0001,hidden_layer_sizes=(100,100),solver='adam')
+#nn.fit(X_train_final,t_train_final)
+#t_hat_test = nn.predict(X_test)
+#t_hat_test_proba = nn.predict_proba(X_test)
+#t_test = tf.cast(t_test, dtype=tf.int64)
+#t_hat_test_proba = tf.cast(t_hat_test_proba, dtype=tf.float32)
+#loss_nn = tf.keras.losses.sparse_categorical_crossentropy(t_test,t_hat_test_proba)
+#print("CLASSIFICATION REPORT FOR NN ",classification_report(t_test,t_hat_test))
+#print("VALUE OF CROSS ENTROPY LOSS FOR NN: ",tf.reduce_mean(loss_nn).numpy())
+
 
 #CONFUSION MATRIX
 from sklearn.metrics import confusion_matrix
-cm = confusion_matrix(t_test,t_hat_test)
+cm = confusion_matrix(t_test,t_hat_test_svm)
 fig, ax = plt.subplots(figsize=(8, 8))
 cax = ax.matshow(cm, cmap=plt.cm.Blues, alpha=0.7)
 plt.colorbar(cax)

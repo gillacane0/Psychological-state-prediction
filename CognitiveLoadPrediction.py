@@ -4,6 +4,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import tensorflow as tf
+from sklearn.metrics import hinge_loss
+
 
 df = pd.read_csv("psychological_state_dataset.csv")
 
@@ -75,7 +77,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 
-#commented out to avoid running the code
+
 """
 #LOGISTIC REGRESSION
 logreg = LogisticRegression()
@@ -138,31 +140,42 @@ print("Classification report for SVM on Dev set: ",
       classification_report(t_dev, t_hat_dev_svm))
 print("Classification report for NN on Dev set: ",
       classification_report(t_dev, t_hat_dev_nn))
-
 """
+
 
 # REMERGE
 X_train = np.concatenate((X_train, X_dev), axis=0)
 t_train = np.concatenate((t_train, t_dev), axis=0)
 
 
-#FINAL MODEL
-nn = MLPClassifier(activation='relu', alpha=0.01,hidden_layer_sizes=(300,150), solver='adam')
-nn.fit(X_train,t_train)
-t_hat_test = nn.predict(X_test)
+#FINAL MODE
+svm = SVC(C=1000, gamma=0.001, kernel='rbf')
+svm.fit(X_train, t_train)
 
-#SCORE
-t_test = tf.cast(t_test, dtype=tf.int64)
-t_hat_test = tf.cast(t_hat_test, dtype=tf.float32)
-loss_nn = tf.keras.losses.categorical_crossentropy(t_test,t_hat_test)
+#SCORES
+t_hat_test_svm = svm.predict(X_test)
+decision_values_SVM = svm.decision_function(X_dev)
+loss_SVM = hinge_loss(t_dev, decision_values_SVM)
 
-print("CLASSIFICATION REPORT FOR NN ",classification_report(t_test,t_hat_test))
-print("VALUE OF CROSS ENTROPY LOSS FOR NN: ",loss_nn.numpy())
+print("CLASSIFICATION REPORT FOR SVM ",classification_report(t_test,t_hat_test_svm))
+print("VALUE OF HINGE LOSS  FOR SVM: ",tf.reduce_mean(loss_SVM).numpy())
+
+
+#FOR NERUAL NETWORK
+
+#nn = MLPClassifier(activation='relu', alpha=0.01,hidden_layer_sizes=(300,150), solver='adam')
+#nn.fit(X_train,t_train)
+#t_hat_test = nn.predict(X_test)
+#t_test = tf.cast(t_test, dtype=tf.int64)
+#t_hat_test = tf.cast(t_hat_test, dtype=tf.float32)
+#loss_nn = tf.keras.losses.categorical_crossentropy(t_test,t_hat_test)
+#print("CLASSIFICATION REPORT FOR NN ",classification_report(t_test,t_hat_test))
+#print("VALUE OF CROSS ENTROPY LOSS FOR NN: ",loss_nn.numpy())
 
 
 #CONFUSION MATRIX
 from sklearn.metrics import confusion_matrix
-cm = confusion_matrix(t_test,t_hat_test)
+cm = confusion_matrix(t_test,t_hat_test_svm)
 fig, ax = plt.subplots(figsize=(8, 8))
 cax = ax.matshow(cm, cmap=plt.cm.Blues, alpha=0.7)
 plt.colorbar(cax)
